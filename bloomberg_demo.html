@@ -1,0 +1,398 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+     <script type="text/javascript" src="js/bloomberg_demo_json.js"></script>
+    <script type="text/javascript">
+
+  
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.load('current', {packages: ['table']});
+      var obj_main = JSON.parse(s_global);
+
+    google.charts.setOnLoadCallback(drawHome);
+
+    function drawTable()
+    {
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Area');
+      data.addColumn('string', 'Version');
+      data.addColumn('number', 'Uptime');
+      data.addColumn('string', 'Hostname');
+      data.addRows(obj_main.length);
+
+      for (var x=0;x<obj_main.length;x++)
+      {
+        data.setCell(x, 0, obj_main[x].area);
+        data.setCell(x, 1, obj_main[x].version);
+        data.setCell(x, 2, obj_main[x].uptime);
+        data.setCell(x, 3, obj_main[x].hostname);
+      }
+
+      var table = new google.visualization.Table(document.getElementById('chart_div_top'));
+      
+      var options_ = {showRowNumber: true, width: '100%', height: '100%',
+      page: 'enable', pageSize: 25};
+
+      table.draw(data,options_); 
+    }
+
+    function drawHome()
+    {
+      document.getElementById("div_main").style.visibility = 'visible';
+      document.getElementById("chart_div_top").style.visibility = 'hidden';
+      document.getElementById("chart_div_bottom").style.visibility = 'hidden';
+      document.getElementById("chart_div_detail").style.visibility = 'hidden';
+
+      
+    }
+
+    function drawAreaChart() {
+      var myMap = new Map();
+      
+      for (var i=0;i<obj_main.length;i++){
+        var key = obj_main[i].area;
+        if (myMap.get(key) != null){
+          var existing = myMap.get(key);
+          var newCount = parseInt(existing) + 1;
+           myMap.set(key, newCount);
+        }else{
+          myMap.set(key, 1);
+        }
+      }
+
+var chartingData = new google.visualization.DataTable();
+      chartingData.addColumn('string', 'area');
+      chartingData.addColumn('number', 'Number of Machines');   
+
+
+      chartingData.addRows(myMap.size);
+      var c = 0;
+      for (var [key, value] of myMap) {
+        chartingData.setCell(c,0,key);      
+        chartingData.setCell(c,1,value);
+        c=c+1;
+      }
+        
+      var options = {'title':'Number of Machines in Each Area',
+                     'width':400,
+                     'height':300};
+
+      var chart = new google.visualization.PieChart(document.getElementById('chart_div_top'));
+      
+
+
+      function selectHandler() {
+          var selectedItem = chart.getSelection()[0];
+          if (selectedItem) {
+            var selection = chartingData.getValue(selectedItem.row, 0);
+            google.charts.setOnLoadCallback(drawHostnameUptimeChart(selection));
+          }
+        }
+
+        google.visualization.events.addListener(chart, 'select', selectHandler);    
+        chart.draw(chartingData, options); 
+
+    }
+
+
+    function drawVersionChart()
+    {
+      var myMap2 = new Map();
+      
+      for (var i=0;i<obj_main.length;i++){
+        var key2 = obj_main[i].version;
+
+        if (myMap2.get(key2) != null){
+          var existing2 = myMap2.get(key2);
+          var newCount2 = parseInt(existing2) + 1;
+           myMap2.set(key2, newCount2);
+        }else{
+          myMap2.set(key2, 1);
+        }
+      }
+
+    var chartingData2 = new google.visualization.DataTable();
+
+      chartingData2.addColumn('string', 'version');
+      chartingData2.addColumn('number', 'Number of Machines');   
+
+
+
+      chartingData2.addRows(myMap2.size);
+      var x = 0;
+
+      for (var [key2, value2] of myMap2) {
+
+        chartingData2.setCell(x,0,key2);   
+        chartingData2.setCell(x,1,value2);
+        x=x+1;
+      }
+        
+      var options2 = {'title':'Different Machine Versions',
+                     'width':400,
+                     'height':300};
+
+    
+      var chart2 = new google.visualization.PieChart(document.getElementById('chart_div_top'));
+      chart2.draw(chartingData2, options2);
+    }
+
+
+    function drawHostnameUptimeChart(areatype)
+    {
+      var counter=0;
+      var chartingData3 = new google.visualization.DataTable();
+      chartingData3.addColumn('string', 'hostname');
+      chartingData3.addColumn('number', 'uptime');  
+
+
+      var MyMap_ = new Map();
+
+      for (var i=0;i<obj_main.length;i++){
+
+        if(String(obj_main[i].area)== String(areatype))
+          counter++;
+      }
+
+      chartingData3.addRows(counter);
+
+      var z=0;
+      for (var i=0;i<obj_main.length;i++){
+         var s1 = String(obj_main[i].area);
+         var s2 = String(areatype); 
+
+        if (s1 == s2)
+        {
+          chartingData3.setCell(z,0,obj_main[i].hostname);  
+          chartingData3.setCell(z,1,parseInt(obj_main[i].uptime));
+          z=z+1;
+        }
+      }
+        
+      var options3 = {'title':areatype.toUpperCase()+': Machine Hostnames and Uptimes',
+                     'width':800,
+                     'height':600
+                     };
+
+      document.getElementById("chart_div_detail").style.visibility = 'visible';
+      var chart3 = new google.visualization.ColumnChart(document.getElementById('chart_div_detail'));
+      chart3.draw(chartingData3, options3);
+    }
+
+
+    function drawMinMaxAreaUptimesChart()
+    {
+      var chartingData4 = new google.visualization.DataTable();
+      chartingData4.addColumn('string', 'areas');
+      chartingData4.addColumn('number', 'Min');
+      chartingData4.addColumn('number', 'Max');
+      chartingData4.addColumn('number', 'Avg.');
+
+
+      var myMap4 = new Map();
+      
+      for (var i=0;i<obj_main.length;i++)
+      {
+          var key4 = obj_main[i].area;
+
+          var myMinMaxStuff = myMap4.get(key4);
+          var currUptime = obj_main[i].uptime;
+
+          if(currUptime==null || currUptime=="")
+          {
+            currUptime="0";
+          }
+          if (myMinMaxStuff == null)
+          {
+            myMinMaxStuff = new minmaxstuff(currUptime,currUptime,currUptime,1);
+          }
+          else
+          {
+            if (parseInt(currUptime)<parseInt(myMinMaxStuff.min)) 
+              myMinMaxStuff.min=currUptime;
+
+            if (parseInt(currUptime)>parseInt(myMinMaxStuff.max))
+              myMinMaxStuff.max=currUptime;
+            
+            myMinMaxStuff.total=parseInt(myMinMaxStuff.total) + parseInt(currUptime);
+            myMinMaxStuff.howmany++;
+          }
+          myMap4.set(key4, myMinMaxStuff);
+      }
+
+      chartingData4.addRows(myMap4.size);
+      var a = 0;
+      for (var [key4, value] of myMap4) 
+      {
+        chartingData4.setCell(a,0,key4);      
+        chartingData4.setCell(a,1,value.min);
+        chartingData4.setCell(a,2,value.max);
+        chartingData4.setCell(a,3,value.total/value.howmany);
+        a=a+1;
+      }
+
+      var options4 = {title : 'Uptime data per area',
+      height: '100%',
+      width: '100%',
+      vAxis: {title: 'Uptime'},
+      hAxis: {title: 'Area'},
+      seriesType: 'bars',
+      legend: {position: 'top'}
+      };
+
+    
+      var chart4 = new google.visualization.ColumnChart(document.getElementById('chart_div_bottom'));
+      chart4.draw(chartingData4, options4);
+    }
+
+
+    class minmaxstuff
+    {
+       constructor(min, max, total, howmany) {    
+          this.min = min;
+          this.max = max;
+          this.total = total;
+          this.howmany = howmany;
+        }
+    }
+
+    function drawVersionsInEachAreaChart()
+    {
+      var isittherealready=false;
+
+      
+      var chartingData5 = new google.visualization.DataTable();
+      chartingData5.addColumn('string', 'areas');
+      chartingData5.addColumn('number', 'Number of Different Versions');
+
+
+      var myMap5 = new Map();
+      
+      for (var i=0;i<obj_main.length;i++)
+      {
+        var key5 = obj_main[i].area;
+        var mappedarray=myMap5.get(key5);
+
+        if (mappedarray == null){
+ 
+          
+          var array = [];
+          array.push(obj_main[i].version)
+          myMap5.set(key5, array);
+        }
+        else
+        {
+          var isittherealready=false;
+          for (var x=0;x<mappedarray.length;x++)
+          {
+            if (String(obj_main[i].version)==String(mappedarray[x])){
+              isittherealready=true;
+            }
+          }
+          
+          if (!isittherealready){
+            mappedarray.push(obj_main[i].version);
+            myMap5.set(key5, mappedarray);
+          }
+        }
+      }
+      chartingData5.addRows(myMap5.size);
+      var f = 0;
+      for (var [key5, value] of myMap5) 
+      {
+        chartingData5.setCell(f,0,key5);      
+        chartingData5.setCell(f,1,value.length);
+        f=f+1;
+      }
+     
+      var options5 = {title : 'Versions in Each Area',
+      
+          height: '100%',
+          width: '100%',
+          vAxis: {title: 'Number of Versions'},
+          hAxis: {title: 'Areas'},
+          seriesType: 'bars',
+          legend: {position: 'top'}
+          };
+
+    
+      var chart5 = new google.visualization.ColumnChart(document.getElementById('chart_div_detail'));
+      chart5.draw(chartingData5, options5);
+    }
+    
+
+function clickMe(button){
+  if (button == "1"){
+      google.charts.setOnLoadCallback(drawAreaChart);
+      google.charts.setOnLoadCallback(drawMinMaxAreaUptimesChart);
+      document.getElementById("div_main").style.visibility = 'hidden';
+      document.getElementById("chart_div_top").style.visibility = 'visible';
+      document.getElementById("chart_div_bottom").style.visibility = 'visible';
+      document.getElementById("chart_div_detail").style.visibility = 'hidden';
+  }
+  else if (button=="0")
+  {
+    google.charts.setOnLoadCallback(drawHome);
+  }
+  else if (button=="3")
+  {
+    google.charts.setOnLoadCallback(drawTable);
+    document.getElementById("div_main").style.visibility = 'hidden';
+    document.getElementById("chart_div_top").style.visibility = 'visible';
+    document.getElementById("chart_div_bottom").style.visibility = 'hidden';
+    document.getElementById("chart_div_detail").style.visibility = 'hidden';
+  }
+  else
+  { 
+     google.charts.setOnLoadCallback(drawVersionChart);
+     google.charts.setOnLoadCallback(drawVersionsInEachAreaChart);
+     document.getElementById("div_main").style.visibility = 'hidden';
+     document.getElementById("chart_div_top").style.visibility = 'visible';
+    document.getElementById("chart_div_bottom").style.visibility = 'hidden';
+    document.getElementById("chart_div_detail").style.visibility = 'visible';
+  }
+}
+
+    </script>
+  </head>
+  <body>
+   <table class="columns">
+     <tr>
+        <td><button style="border: 1px solid #ccc height:100%; width:100%" onClick="clickMe(0)">Home</button>
+        </td>
+        <td><button style="border: 1px solid #ccc height:100%; width:100%" onClick="clickMe(1)">By Area</button>
+        </td>
+        <td><button style="border: 1px solid #ccc height:100%; width:100%" onClick="clickMe(2)">By Version</button>
+        </td>
+        <td><button style="border: 1px solid #ccc height:100%; width:100%" onClick="clickMe(3)">Raw Data</button>
+        </td>
+    </tr>
+    <tr>
+      <td colspan="4"> 
+    <table class="columns">
+    
+
+      <tr>
+        <td colspan="3">
+          <div id="div_main" class="tabcontent">
+           <h1> Welcome to Neha's Demo</h1>
+          </div>
+        </td>
+        </tr>
+       <tr> 
+        <td><div id="chart_div_top" style="border: 1px solid #ccc"></div></td>
+
+        <td rowspan="2"><div  id="chart_div_detail" style="border: 1px solid #ccc height:100%; width:100%"></div></td>
+         </tr>
+       
+        <tr> 
+        <td><div id="chart_div_bottom" style="border: 1px solid #ccc height:100%; width:100%"></div></td>
+         </tr>
+
+     </table>
+      </td>
+     </tr>
+    </table>
+    
+  </body>
+</html>
